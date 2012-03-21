@@ -5,9 +5,10 @@
   /*!
    * Core Class
    */
-  var Transition = function(elem, property, duration, timingFn, delay, callback) {
+  var Transition = function(elem, props, duration, easing, delay, callback) {
 
     this.VERSION = '1.0';
+    callback && callback();
 
   };
 
@@ -31,11 +32,11 @@
     var elem = document.documentElement,
         cssHooks = {},
         eventNames = {
-          'transition'       : 'transitionend',
           'WebkitTransition' : 'webkitTransitionEnd',
           'MozTransition'    : 'transitionend',
           'OTransition'      : 'oTransitionEnd',
-          'msTransition'     : 'MSTransitionEnd'
+          'msTransition'     : 'MSTransitionEnd',
+          'transition'       : 'transitionend'
         },
         capProp;
 
@@ -75,21 +76,59 @@
     support.transitionEnd = eventNames[support.transition] || null;
 
     // extend to jQuery
-    $.extend($.support, support);
-    $.extend($.cssHooks, cssHooks);
+    _.extend($.support, support);
+    _.extend($.cssHooks, cssHooks);
 
   })('transition transform transformOrigin');
+
+
+  function uncamel(str) {
+    return str.replace(/([A-Z])/g, function(letter) { return '-' + letter.toLowerCase(); });
+  }
 
 
   /*!
    * Plugin definition
    */
-  $.fn.transition = function(property, duration, timingFn, delay, callback) {
-    return this.each(function() {
-      var $this = $(this);
+  $.fn.transition = function(props, callback) {
+    var $this = this,
+        queue = true,
+        dfs   = $.fn.transition.defaults,
+        cfg   = {
+          duration : dfs.duration,
+          easing   : dfs.easing.default,
+          delay    : dfs.delay
+        };
 
-      return new Transition($this, property, duration, timingFn, delay, callback);
-    })
+    if ( !_.isObject(props) ) return;
+
+
+    _.forEach('duration easing delay complete queue'.split(' '), function(key) {
+      if ( _.has(props, key) ) {
+        cfg[key] = props[key];
+        delete props[key];
+      }
+    });
+    if ( _.isFunction(callback) )
+      cfg.complete = callback;
+
+
+    return $this.each(function() {
+      return new Transition(this, props, cfg.duration, cfg.easing, cfg.delay, cfg.complete);
+    });
+  };
+
+  $.fn.transition.defaults = {
+    duration : '400ms',
+    delay    : 0,
+    easing   : {
+      'default'     : 'cubic-bezier(0.1, 0.5, 0.1, 1)',
+      'ease'        : 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+      'linear'      : 'cubic-bezier(0, 0, 1, 1)',
+      'ease-in'     : 'cubic-bezier(0.42, 0, 1, 1)',
+      'ease-out'    : 'cubic-bezier(0, 0, 0.58, 1)',
+      'ease-in-out' : 'cubic-bezier(0.42, 0, 0.58, 1)'
+    }
   };
 
 })( window.jQuery );
