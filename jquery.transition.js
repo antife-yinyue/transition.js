@@ -6,19 +6,21 @@
    * Core Class
    */
   var Transition = function(elem, props, duration, easing, delay, callback) {
-
+    // Current version
     this.VERSION = '1.0';
-    callback && callback();
 
+    elem.css(props);
+
+    callback && callback();
   };
 
   Transition.prototype = {
 
     constructor: Transition,
 
-    addProperty: function() {},
+    run: function() {},
 
-    removeProperty: function() {}
+    stop: function() {}
 
   };
 
@@ -26,11 +28,13 @@
   /*!
    * Check support & Create css hooks
    */
-  var support = {};
+  var support = {},
+      standardProps = ['transition', 'transform', 'transformOrigin', 'transformStyle', 'perspective', 'perspectiveOrigin', 'backfaceVisibility'];
 
-  (function(props) {
-    var elem = document.documentElement,
-        cssHooks = {},
+  (function() {
+    var elem       = document.documentElement,
+        elemStyle  = elem.style,
+        cssHooks   = {},
         eventNames = {
           'WebkitTransition' : 'webkitTransitionEnd',
           'MozTransition'    : 'transitionend',
@@ -38,51 +42,54 @@
           'msTransition'     : 'MSTransitionEnd',
           'transition'       : 'transitionend'
         },
-        capProp;
+        capProp, vendorPrefix;
 
-
-    _.forEach(props.split(' '), function(prop) {
-
+    _.each(arguments[0], function(prop) {
       // standard
-      if ( prop in elem.style ) {
+      if ( prop in elemStyle ) {
         support[prop] = prop;
-        return;
+      }
+      else {
+        // capitalize first character
+        capProp = prop.charAt(0).toUpperCase() + prop.substr(1);
+
+        vendorPrefix = _.find(['Webkit', 'Moz', 'O', 'ms'], function(prefix) {
+          return (prefix + capProp) in elemStyle;
+        });
+
+        support[prop] = vendorPrefix && (vendorPrefix + capProp) || false;
       }
 
-      // capitalize first character
-      capProp = prop.charAt(0).toUpperCase() + prop.substr(1);
-
-      // prefixed
-      _.find(['Webkit', 'Moz', 'O', 'ms'], function(prefix) {
-        return (support[prop] = prefix + capProp) in elem.style;
-      });
-
       // css hooks
-      cssHooks[prop] = {
-        get: function(elem) {
-          return elem.style[support[prop]];
-        },
-        set: function(elem, value) {
-          elem.style[support[prop]] = value;
-        }
-      };
+      if ( support[prop] ) {
+        cssHooks[prop] = {
+          get: function(elem) {
+            return elem.style[support[prop]];
+          },
+          set: function(elem, value) {
+            elem.style[support[prop]] = value;
+          }
+        };
+      }
 
     });
 
     // avoid memory leak in IE
     elem = null;
 
-
-    support.transitionEnd = eventNames[support.transition] || null;
+    support.transitionEnd = eventNames[support.transition] || false;
 
     // extend to jQuery
     _.extend($.support, support);
     _.extend($.cssHooks, cssHooks);
 
-  })('transition transform transformOrigin');
+  })( standardProps );
 
 
-  function uncamel(str) {
+  /*!
+   * Private methods
+   */
+  function unCamel(str) {
     return str.replace(/([A-Z])/g, function(letter) { return '-' + letter.toLowerCase(); });
   }
 
@@ -90,39 +97,55 @@
   /*!
    * Plugin definition
    */
-  $.fn.transition = function(props, callback) {
-    var $this = this,
-        queue = true,
+  $.fn.transition = function(props, duration, easing, delay, callback) {
+    var _this = this,
         dfs   = $.fn.transition.defaults,
-        cfg   = {
-          duration : dfs.duration,
-          easing   : dfs.easing.default,
-          delay    : dfs.delay
+        // Assume that all the parameters are normal, so we consider only the syntax.
+        opt   = $.isPlainObject(duration) ? _.extend({}, duration) : {
+          complete : callback || _.isFunction(delay) && delay || _.isFunction(easing) && easing || _.isFunction(duration) && duration,
+          duration : !_.isFunction(duration) && duration || null,
+          easing   : !_.isFunction(easing) && easing || null,
+          delay    : !_.isFunction(delay) && delay || null
         };
 
-    if ( !_.isObject(props) ) return;
+    //=> cubic bezier curve
+    opt.easing = dfs.easing[opt.easing] || !dfs.easing[opt.easing] && /^cubic-bezier/.test(opt.easing) && opt.easing || null;
 
+    // Queuing
+    if ( opt.queue !== false ) {
+      opt.queue = true;
+    }
 
-    _.forEach('duration easing delay complete queue'.split(' '), function(key) {
-      if ( _.has(props, key) ) {
-        cfg[key] = props[key];
-        delete props[key];
-      }
+    // Turn off animation
+    if ( $.fx.off === true ) {
+      opt.duration = '0s';
+    }
+
+    // Use the default settings
+    _.defaults(opt, {
+      duration : dfs.duration,
+      easing   : dfs.easing._default,
+      delay    : dfs.delay
     });
-    if ( _.isFunction(callback) )
-      cfg.complete = callback;
 
 
-    return $this.each(function() {
-      return new Transition(this, props, cfg.duration, cfg.easing, cfg.delay, cfg.complete);
+    _this.each(function() {
+      return new Transition($(this), props, opt.duration, opt.easing, opt.delay, opt.complete);
     });
+
+    // Chain
+    return _this;
   };
 
+
+  /*!
+   * Setting defaults
+   */
   $.fn.transition.defaults = {
-    duration : '400ms',
-    delay    : 0,
+    duration : '0.4s',
+    delay    : '0s',
     easing   : {
-      'default'     : 'cubic-bezier(0.1, 0.5, 0.1, 1)',
+      '_default'    : 'cubic-bezier(0.1, 0.5, 0.1, 1)',
       'ease'        : 'cubic-bezier(0.25, 0.1, 0.25, 1)',
       'linear'      : 'cubic-bezier(0, 0, 1, 1)',
       'ease-in'     : 'cubic-bezier(0.42, 0, 1, 1)',
