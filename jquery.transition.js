@@ -12,7 +12,7 @@
   var TRANSITION = 'transition',
       TRANSFORM  = 'transform',
 
-      support    = {},
+      support    = {},
       cssHooks   = {},
       elem       = document.documentElement,
       elemStyle  = elem.style,
@@ -45,18 +45,18 @@
           duration = cfg.duration,
           easing   = cfg.easing;
 
-      var transitionProps = _.keys(props),
-          i = _.indexOf(transitionProps, TRANSFORM),
+      var keys = _.keys(props),
+          i = _.indexOf(keys, TRANSFORM),
           transitions = [];
 
       //=> msTransform => MsTransform => -ms-transform
       if ( i > -1 && support[TRANSFORM] ) {
-        transitionProps[i] = capital( support[TRANSFORM] ).replace(/([A-Z])/g, function(l) {
+        keys[i] = capital( support[TRANSFORM] ).replace(/([A-Z])/g, function(l) {
           return '-' + l.toLowerCase();
         });
       }
 
-      _.each(transitionProps, function(prop) {
+      _.each(keys, function(prop) {
         transitions.push( [prop, duration, easing, delay].join(' ') );
       });
       props[support[TRANSITION]] = transitions.join(',');
@@ -65,6 +65,7 @@
       _this.elem  = elem;
       _this.$elem = $(elem);
       _this.props = props;
+      _this.keys  = keys;
       _this.cfg   = cfg;
 
       // chain
@@ -72,16 +73,31 @@
     },
 
     run: function() {
-      var _this = this,
-          queue = _this.cfg.queue;
+      var _this  = this,
+          queue  = _this.cfg.queue,
+          curCSS = {};
 
-      if ( queue !== false ) {
-        queue = queue === true ? 'fx' : queue;
-
-        _this.$elem.queue(queue, function(next) {
+      if ( queue ) {
+        _this.$elem.queue(queue, function(next, hooks) {
           _this._runNative(next);
+
+          // TODO: 多次callback，Chrome闪动
+          // stop transition (please ignore Opera)
+          hooks.stop = function(gotoEnd) {
+            if ( gotoEnd ) {
+              // _this.elem.style[support[TRANSITION] + 'Property'] = 'none';
+              curCSS[support[TRANSITION] + 'Property'] = 'none';
+            }
+
+            _.each(_this.keys, function(prop, key) {
+              curCSS[prop] = _this.$elem.css(prop);
+            });
+            _this.$elem.css(curCSS);
+
+          };
         });
       }
+      // TODO: stop
       else {
         _this._runNative();
       }
@@ -96,16 +112,16 @@
       // defer
       setTimeout(function() {
         $elem.css(_this.props).on(e, function() {
-          // remove event handler
+          // remove last event handler
           $elem.off(e);
 
-          // remove css transition property
+          // remove css transition property (please ignore Opera)
           _this.elem.style[support[TRANSITION]] = '';
 
           _.isFunction(callback) && callback();
           _.isFunction(next) && next();
         });
-      }, 0);
+      }, 1);
     }
   };
 
@@ -127,7 +143,7 @@
         return (prefix + capProp) in elemStyle;
       });
 
-      // return 'false' or vendor css property
+      // return vendor css property or 'false'
       support[prop] = !!vendorPrefix && (vendorPrefix + capProp);
     }
 
@@ -159,6 +175,10 @@
    * Plugin definition
    *
    * Assume that all the parameters are normative, so we consider only the syntax.
+   *
+   * Syntax:
+   * $().transition( properties [, duration] [, easing] [, delay] [, complete] )
+   * $().transition( properties, options )
    */
   $.fn.transition = function(props, duration, easing, delay, callback) {
     var dfs = $.fn.transition.defaults,
@@ -169,23 +189,24 @@
           easing   : !_.isFunction(easing) && easing || null
         };
 
+    // use the default settings
+    _.defaults(cfg, {
+      delay    : dfs.delay,
+      duration : dfs.duration,
+      easing   : '_default',
+      queue    : dfs.queue
+    });
+
     // turn off animation
     if ( $.fx.off === true ) {
       cfg.duration = '0s';
     }
 
-    // transition timing function
-    if ( cfg.easing != null ) {
-      cfg.easing = dfs.easing[cfg.easing] || cfg.easing;
+    if ( cfg.queue === true ) {
+      cfg.queue = 'fx';
     }
 
-    // use the default settings
-    _.defaults(cfg, {
-      delay    : dfs.delay,
-      duration : dfs.duration,
-      easing   : dfs.easing._default,
-      queue    : dfs.queue
-    });
+    cfg.easing = dfs.easing[cfg.easing] || cfg.easing;
 
     props = _.extend({}, props);
 
@@ -199,7 +220,6 @@
     duration : '0.4s',
     easing   : { _default: 'cubic-bezier(0.1, 0.5, 0.1, 1)' },
     queue    : true
-    // queue    : 'fx'
   };
 
   $.fn.transition.constructor = Transition;
