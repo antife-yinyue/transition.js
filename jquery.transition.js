@@ -3,7 +3,7 @@
  * (c)2012 wǒ_is神仙, http://MrZhang.me/
  *
  * Source: https://github.com/jsw0528/Transition
- * Demos:  http://MrZhang.me/
+ * Demos:  http://MrZhang.me/jquery-transition.html
  * MIT Licensed.
  */
 (function($) {
@@ -40,24 +40,22 @@
     constructor: Transition,
 
     init: function(elem, props, cfg) {
-      var _this    = this,
-          delay    = cfg.delay,
-          duration = cfg.duration,
-          easing   = cfg.easing;
-
-      var keys = _.keys(props),
-          i = _.indexOf(keys, TRANSFORM),
-          transitions = [];
+      var _this = this,
+          transitionProps = _.keys(props),
+          i = _.indexOf(transitionProps, TRANSFORM),
+          transitions = [],
+          blank = ' ',
+          str = blank + cfg.duration + blank + cfg.easing + blank + cfg.delay;
 
       //=> msTransform => MsTransform => -ms-transform
       if ( i > -1 && support[TRANSFORM] ) {
-        keys[i] = capital( support[TRANSFORM] ).replace(/([A-Z])/g, function(l) {
+        transitionProps[i] = capital( support[TRANSFORM] ).replace(/([A-Z])/g, function(l) {
           return '-' + l.toLowerCase();
         });
       }
 
-      _.each(keys, function(prop) {
-        transitions.push( [prop, duration, easing, delay].join(' ') );
+      _.each(transitionProps, function(prop) {
+        transitions.push( prop + str );
       });
       props[support[TRANSITION]] = transitions.join(',');
 
@@ -65,39 +63,23 @@
       _this.elem  = elem;
       _this.$elem = $(elem);
       _this.props = props;
-      _this.keys  = keys;
       _this.cfg   = cfg;
+      _this.tps   = transitionProps;
 
       // chain
       return _this;
     },
 
     run: function() {
-      var _this  = this,
-          queue  = _this.cfg.queue,
-          curCSS = {};
+      var _this = this,
+          queue = _this.cfg.queue;
 
       if ( queue ) {
-        _this.$elem.queue(queue, function(next, hooks) {
+        _this.$elem.queue(queue, function(next) {
           _this._runNative(next);
-
-          // TODO: 多次callback，Chrome闪动
-          // stop transition (please ignore Opera)
-          hooks.stop = function(gotoEnd) {
-            if ( gotoEnd ) {
-              // _this.elem.style[support[TRANSITION] + 'Property'] = 'none';
-              curCSS[support[TRANSITION] + 'Property'] = 'none';
-            }
-
-            _.each(_this.keys, function(prop, key) {
-              curCSS[prop] = _this.$elem.css(prop);
-            });
-            _this.$elem.css(curCSS);
-
-          };
+          // hooks.stop
         });
       }
-      // TODO: stop
       else {
         _this._runNative();
       }
@@ -122,7 +104,25 @@
           _.isFunction(next) && next();
         });
       }, 1);
+    },
+
+    stop: function() {
+      var _this  = this,
+          $elem  = _this.$elem,
+          args   = arguments,
+          curCSS = {};
+
+      // stop transition (please ignore Opera)
+      curCSS[support[TRANSITION] + 'Property'] = 'none';
+
+      // !gotoEnd
+      !args[args.length] && _.each(_this.tps, function(prop) {
+        curCSS[prop] = $elem.css(prop);
+      });
+
+      $elem.css(curCSS).off(support.transitionEnd);
     }
+
   };
 
 
@@ -177,8 +177,8 @@
    * Assume that all the parameters are normative, so we consider only the syntax.
    *
    * Syntax:
-   * $().transition( properties [, duration] [, easing] [, delay] [, complete] )
-   * $().transition( properties, options )
+   * .transition( properties [, duration] [, easing] [, delay] [, complete] )
+   * .transition( properties, options )
    */
   $.fn.transition = function(props, duration, easing, delay, callback) {
     var dfs = $.fn.transition.defaults,
@@ -211,7 +211,7 @@
     props = _.extend({}, props);
 
     return this.each(function() {
-      new Transition(this, props, cfg);
+      $.data(this, TRANSITION, new Transition(this, props, cfg));
     });
   };
 
@@ -223,5 +223,29 @@
   };
 
   $.fn.transition.constructor = Transition;
+
+
+  /*!
+   * Overwrite .stop()
+   */
+  if ( support[TRANSITION] ) {
+    var oldStop = $.fn.stop;
+
+    $.fn.stop = function() {
+      var $this = this,
+          args  = arguments,
+          data;
+
+      $this.each(function() {
+        data = $.data(this, TRANSITION);
+
+        if ( data instanceof Transition ) {
+          data.stop.apply(data, args);
+        }
+      });
+
+      oldStop.apply($this, args);
+    };
+  }
 
 })( window.jQuery );
