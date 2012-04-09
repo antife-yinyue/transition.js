@@ -106,19 +106,23 @@
       }, 1);
     },
 
-    stop: function() {
+    stop: function(queue, clearQueue, gotoEnd) {
       var _this  = this,
           $elem  = _this.$elem,
-          args   = arguments,
           curCSS = {};
+
+      if ( typeof queue !== 'string' ) {
+        gotoEnd = clearQueue;
+        // clearQueue = queue;
+        // queue = undefined;
+      }
+
+      !gotoEnd && _.each(_this.tps, function(prop) {
+        curCSS[prop] = $elem.css(prop);
+      });
 
       // stop transition (please ignore Opera)
       curCSS[support[TRANSITION] + 'Property'] = 'none';
-
-      // !gotoEnd
-      !args[args.length] && _.each(_this.tps, function(prop) {
-        curCSS[prop] = $elem.css(prop);
-      });
 
       $elem.css(curCSS).off(support.transitionEnd);
     }
