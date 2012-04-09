@@ -11,6 +11,7 @@
 
   var TRANSITION = 'transition',
       TRANSFORM  = 'transform',
+      SPACE      = ' ',
 
       support    = {},
       cssHooks   = {},
@@ -44,8 +45,7 @@
           transitionProps = _.keys(props),
           i = _.indexOf(transitionProps, TRANSFORM),
           transitions = [],
-          blank = ' ',
-          str = blank + cfg.duration + blank + cfg.easing + blank + cfg.delay;
+          str = SPACE + cfg.duration + SPACE + cfg.easing + SPACE + cfg.delay;
 
       //=> msTransform => MsTransform => -ms-transform
       if ( i > -1 && support[TRANSFORM] ) {
