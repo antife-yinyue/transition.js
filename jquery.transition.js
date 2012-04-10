@@ -45,7 +45,7 @@
           transitionProps = _.keys(props),
           i = _.indexOf(transitionProps, TRANSFORM),
           transitions = [],
-          str = SPACE + cfg.duration + SPACE + cfg.easing + SPACE + cfg.delay;
+          suffix = SPACE + cfg.duration + SPACE + cfg.easing + SPACE + cfg.delay;
 
       //=> msTransform => MsTransform => -ms-transform
       if ( i > -1 && support[TRANSFORM] ) {
@@ -55,7 +55,7 @@
       }
 
       _.each(transitionProps, function(prop) {
-        transitions.push( prop + str );
+        transitions.push( prop + suffix );
       });
       props[support[TRANSITION]] = transitions.join(',');
 
@@ -88,17 +88,27 @@
     _runNative: function(next) {
       var _this    = this,
           $elem    = _this.$elem,
+          elem     = _this.elem,
           callback = _this.cfg.complete,
-          e        = support.transitionEnd;
+          preProp  = support[TRANSITION],
+          endEvent = support.transitionEnd;
 
       // defer
       setTimeout(function() {
-        $elem.css(_this.props).on(e, function() {
+        $elem.css(_this.props).on(endEvent, function() {
           // remove last event handler
-          $elem.off(e);
+          $elem.off(endEvent);
 
-          // remove css transition property (please ignore Opera)
-          _this.elem.style[support[TRANSITION]] = '';
+          // remove css transition property
+          if ( preProp === 'OTransition' ) {
+            elem.style[preProp + 'Property'] = '';
+            elem.style[preProp + 'Duration'] = '';
+            elem.style[preProp + 'TimingFunction'] = '';
+            elem.style[preProp + 'Delay'] = '';
+          }
+          else {
+            elem.style[preProp] = '';
+          }
 
           _.isFunction(callback) && callback();
           _.isFunction(next) && next();
@@ -121,7 +131,7 @@
         curCSS[prop] = $elem.css(prop);
       });
 
-      // stop transition (please ignore Opera)
+      // stop transition
       curCSS[support[TRANSITION] + 'Property'] = 'none';
 
       $elem.css(curCSS).off(support.transitionEnd);
