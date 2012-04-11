@@ -231,7 +231,7 @@
 
   $.fn.transition.defaults = {
     delay    : '0s',
-    duration : '0.4s',
+    duration : '0.5s',
     easing   : { _default: 'cubic-bezier(0.1, 0.5, 0.1, 1)' },
     queue    : true
   };
