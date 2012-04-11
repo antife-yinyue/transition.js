@@ -1,5 +1,5 @@
 /*!
- * Underscore.js 1.3.1
+ * Underscore.js 1.3.3
  * (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
  */
 (function() {
@@ -26,7 +26,7 @@
     // nativeFilter       = ArrayProto.filter,
     // nativeEvery        = ArrayProto.every,
     nativeSome         = ArrayProto.some,
-    nativeIndexOf      = ArrayProto.indexOf,
+    // nativeIndexOf      = ArrayProto.indexOf,
     // nativeLastIndexOf  = ArrayProto.lastIndexOf,
     // nativeIsArray      = Array.isArray,
     nativeKeys         = Object.keys;
@@ -96,12 +96,12 @@
    * Array Functions
    */
   // http://underscorejs.org/#indexOf
-  _.indexOf = function(array, item) {
-    if (array == null) return -1;
-    if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item);
-    for (var i = 0, l = array.length; i < l; i++) if (i in array && array[i] === item) return i;
-    return -1;
-  };
+  // _.indexOf = function(array, item) {
+  //   if (array == null) return -1;
+  //   if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item);
+  //   for (var i = 0, l = array.length; i < l; i++) if (i in array && array[i] === item) return i;
+  //   return -1;
+  // };
 
   /*!
    * Function (uh, ahem) Functions

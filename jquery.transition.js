@@ -3,7 +3,7 @@
  * (c)2012 wǒ_is神仙, http://MrZhang.me/
  *
  * Source: https://github.com/jsw0528/Transition
- * Demos:  http://MrZhang.me/jquery-transition.html
+ * Demos: http://MrZhang.me/jquery-transition.html
  * MIT Licensed.
  */
 (function($) {
@@ -15,6 +15,7 @@
 
       support    = {},
       cssHooks   = {},
+      storage    = {},
       elem       = document.documentElement,
       elemStyle  = elem.style,
       capital    = function(s) { return s.charAt(0).toUpperCase() + s.substr(1); },
@@ -43,18 +44,26 @@
     init: function(elem, props, cfg) {
       var _this = this,
           transitionProps = _.keys(props),
-          i = _.indexOf(transitionProps, TRANSFORM),
           transitions = [],
           suffix = SPACE + cfg.duration + SPACE + cfg.easing + SPACE + cfg.delay;
 
-      //=> msTransform => MsTransform => -ms-transform
-      if ( i > -1 && support[TRANSFORM] ) {
-        transitionProps[i] = capital( support[TRANSFORM] ).replace(/([A-Z])/g, function(l) {
-          return '-' + l.toLowerCase();
-        });
-      }
-
       _.each(transitionProps, function(prop) {
+        if ( storage[prop] ) {
+          prop = storage[prop];
+        }
+        else {
+          // e.g. prop == transform-origin || transformOrigin
+          //=> transformOrigin
+          prop = $.camelCase(prop);
+          //=> msTransformOrigin
+          prop = support[prop] || prop;
+          //=> MsTransformOrigin => -ms-transform-origin
+          prop = prop.replace(/^(ms)/, function() { return 'Ms'; })
+                     .replace(/([A-Z])/g, function(m) { return '-' + m.toLowerCase(); });
+
+          storage[prop] = prop;
+        }
+
         transitions.push( prop + suffix );
       });
       props[support[TRANSITION]] = transitions.join(',');
@@ -110,7 +119,8 @@
             elem.style[preProp] = '';
           }
 
-          _.isFunction(callback) && callback();
+          // set 'this' to the DOM element being transitioned
+          _.isFunction(callback) && callback.call(elem);
           _.isFunction(next) && next();
         });
       }, 1);

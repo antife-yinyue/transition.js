@@ -1,3 +1,11 @@
+/*!
+ * jQuery.Transition Fallback Solution
+ * (c)2012 wǒ_is神仙, http://MrZhang.me/
+ *
+ * Source: https://github.com/jsw0528/Transition
+ * Demos: http://MrZhang.me/jquery-transition.html
+ * MIT Licensed.
+ */
 (function($) {
   'use strict';
 
