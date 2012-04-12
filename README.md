@@ -1,4 +1,5 @@
 #Super-smooth CSS3 transitions and transformations for jQuery
+---
 
 ##Syntax
 
