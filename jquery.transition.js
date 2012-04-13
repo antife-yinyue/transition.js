@@ -13,8 +13,8 @@
       TRANSFORM  = 'transform',
       SPACE      = ' ',
 
-      support    = {},
-      cssHooks   = {},
+      support    = $.support,
+      cssHooks   = $.cssHooks,
       storage    = {},
       elem       = document.documentElement,
       elemStyle  = elem.style,
@@ -59,7 +59,7 @@
           prop = support[prop] || prop;
           //=> MsTransformOrigin => -ms-transform-origin
           prop = prop.replace(/^(ms)/, function() { return 'Ms'; })
-                     .replace(/([A-Z])/g, function(m) { return '-' + m.toLowerCase(); });
+                     .replace(/([A-Z])/g, function(letter) { return '-' + letter.toLowerCase(); });
 
           storage[prop] = prop;
         }
@@ -128,7 +128,6 @@
 
     stop: function(queue, clearQueue, gotoEnd) {
       var _this  = this,
-          $elem  = _this.$elem,
           curCSS = {};
 
       if ( typeof queue !== 'string' ) {
@@ -138,13 +137,13 @@
       }
 
       !gotoEnd && _.each(_this.tps, function(prop) {
-        curCSS[prop] = $elem.css(prop);
+        curCSS[prop] = $.css(_this.elem, prop);
       });
 
       // stop transition
       curCSS[support[TRANSITION] + 'Property'] = 'none';
 
-      $elem.css(curCSS).off(support.transitionEnd);
+      _this.$elem.css(curCSS).off(support.transitionEnd);
     }
 
   };
@@ -174,8 +173,8 @@
     // create css hook
     if ( support[prop] ) {
       cssHooks[prop] = {
-        get: function(elem) {
-          return elem.style[support[prop]];
+        get: function(elem, computed) {
+          return computed ? $.css(elem, support[prop]) : elem.style[support[prop]];
         },
         set: function(elem, value) {
           elem.style[support[prop]] = value;
@@ -189,10 +188,6 @@
 
   // avoid memory leak in IE
   elem = null;
-
-  // extend to jQuery
-  _.extend($.support, support);
-  _.extend($.cssHooks, cssHooks);
 
 
   /*!
