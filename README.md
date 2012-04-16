@@ -9,7 +9,7 @@
 
 ##Live Demos
 
-[http://MrZhang.me/jquery-transition.html](http://MrZhang.me/jquery-transition.html)
+[http://MrZhang.me/blog/jquery-transition.html](http://MrZhang.me/blog/jquery-transition.html)
 
 ##Downloads
 
