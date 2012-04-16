@@ -15,13 +15,13 @@
 
 If you have used `Underscore.js` in your project, please download:
 
-- [jQuery.Transition.min.js](https://github.com/downloads/jsw0528/Transition/jquery.transition.min.js)
-- [jQuery.Transition-with-fallback.min.js](https://github.com/downloads/jsw0528/Transition/jquery.transition-with-fallback.min.js)
+- [jQuery.Transition.min.js](https://github.com/downloads/jsw0528/Transition/jquery.transition.min.js) (1.3K, gzipped)
+- [jQuery.Transition-with-fallback.min.js](https://github.com/downloads/jsw0528/Transition/jquery.transition-with-fallback.min.js) (1.9K, gzipped)
 
 Otherwise:
 
-- [jQuery.Transition.pkg.js](https://github.com/downloads/jsw0528/Transition/jquery.transition.pkg.js)
-- [jQuery.Transition-with-fallback.pkg.js](https://github.com/downloads/jsw0528/Transition/jquery.transition-with-fallback.pkg.js)
+- [jQuery.Transition.pkg.js](https://github.com/downloads/jsw0528/Transition/jquery.transition.pkg.js) (1.8K, gzipped)
+- [jQuery.Transition-with-fallback.pkg.js](https://github.com/downloads/jsw0528/Transition/jquery.transition-with-fallback.pkg.js) (2.3K, gzipped)
 
 ##Notes
 
@@ -36,6 +36,6 @@ Licensed under the [MIT License](http://www.opensource.org/licenses/mit-license.
 
 ##Change Log
 
-**1.0**  -- April 11, 2012
+**1.0**  -- April 16, 2012
 
 Initial release.
