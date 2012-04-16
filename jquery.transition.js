@@ -13,8 +13,8 @@
       TRANSFORM  = 'transform',
       SPACE      = ' ',
 
-      support    = $.support,
-      cssHooks   = $.cssHooks,
+      support    = {},
+      cssHooks   = {},
       storage    = {},
       elem       = document.documentElement,
       elemStyle  = elem.style,
@@ -188,6 +188,10 @@
 
   // avoid memory leak in IE
   elem = null;
+
+  // extend to jQuery
+  _.extend($.support, support);
+  _.extend($.cssHooks, cssHooks);
 
 
   /*!
