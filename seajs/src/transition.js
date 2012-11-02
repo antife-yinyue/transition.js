@@ -2,9 +2,7 @@ define(function(require, exports, module) {
   var $ = require('$')
 
   var TRANSITION = 'transition'
-
   var cssPrefixes = ['Webkit', 'Moz', 'ms', 'O']
-
   var defaults = {
     duration: '0.5s',
     easing: 'ease',
@@ -12,10 +10,16 @@ define(function(require, exports, module) {
     queue: true,
     onTransitionEnd: null
   }
-
   var util = seajs.pluginSDK.util
 
-  // feature tests
+  /**
+   * feature tests
+   *
+   * returns:
+   * $.support.transition  -> true/false
+   * $.support.transform2D -> true/false
+   * $.support.transform3D -> true/false
+   */
   ;(function() {
     var tests = {}
     tests[TRANSITION] = TRANSITION
@@ -25,15 +29,14 @@ define(function(require, exports, module) {
     var gangnam = document.documentElement
     var style = gangnam.style
 
-    util.forEach(util.keys(tests), function(k) {
-      $.support[tests[k]] = ($.cssProps[k] = vendorPropName(style, k)) in style
+    util.forEach(util.keys(tests), function(i) {
+      $.support[tests[i]] = ($.cssProps[i] = vendorPropName(style, i)) in style
     })
 
     // avoid memory leak in IE
     gangnam = null
   })()
 
-  // get the name of the vendor transition event
   var vendorEvents = {
     'WebkitTransition': 'webkitTransitionEnd',
     'MozTransition': 'transitionend',
@@ -45,15 +48,15 @@ define(function(require, exports, module) {
 
 
   /**
-   * Core class definition
+   * core class definition
    *
-   * Uasge:
+   * uasge:
    * new Transition(element, properties, [options])
    * or
    * var t = new Transition(element)
    * t.run(properties, [options])
    *
-   * `element`: { String | DOM element | jQuery object }
+   * `element`: { string for ID | Element | jQuery }
    */
   var Transition = function(element, properties, options) {
 
@@ -75,20 +78,18 @@ define(function(require, exports, module) {
     properties || (properties = {})
     options = mergeObject(defaults, options)
 
-    var element = $element[0]
-    var names = util.keys(properties)
-    var queue = options.queue
+    this.cssProps = util.keys(properties)
+    this.options = options
+
+    var queue = fixQueue(options.queue)
     var cb = options.onTransitionEnd
     var transitions = []
 
-    this.cssProps = names
-    this.options = options
-
-
-    util.forEach(names, function(name) {
+    util.forEach(this.cssProps, function(name) {
+      // I help jQuery do this job
       name = $.camelCase(name)
       name = $.cssProps[name] ||
-            ($.cssProps[name] = vendorPropName(element.style, name))
+            ($.cssProps[name] = vendorPropName($element[0].style, name))
 
       // set string for the `transition` css property
       name = name.replace(/^(ms)/, function() { return 'Ms' })
@@ -104,8 +105,6 @@ define(function(require, exports, module) {
 
 
     if (queue) {
-      queue === true && (queue = 'fx')
-
       $element.queue(queue, function(next) {
         _run(next)
       })
@@ -120,8 +119,8 @@ define(function(require, exports, module) {
 
           $element.off(vendorEvent).css(TRANSITION, '')
 
-          // set 'this' to the DOM element being transitioned
-          util.isFunction(cb) && cb.call(element)
+          // set `this` point to `this.$element[0]`
+          util.isFunction(cb) && cb.call($element[0])
 
           util.isFunction(next) && next()
         })
@@ -131,17 +130,19 @@ define(function(require, exports, module) {
 
   Transition.prototype.stop = function(clearQueue, jumpToEnd) {
     var $element = this.$element
-    var queue = this.options.queue
+    var queue = fixQueue(this.options.queue)
+    var params = [clearQueue, jumpToEnd]
     var curCSS = {}
 
+    queue && params.unshift(queue)
+
+    // get the computed styles
     !jumpToEnd && util.forEach(this.cssProps, function(name) {
       curCSS[name] = $.css($element[0], name)
     })
     curCSS[$.cssProps[TRANSITION] + 'Property'] = 'none'
 
-    queue === true && (queue = 'fx')
-
-    $element.off(vendorEvent).css(curCSS).stop(queue, clearQueue, jumpToEnd)
+    $element.off(vendorEvent).css(curCSS).stop.apply($element, params)
   }
 
 
@@ -177,6 +178,16 @@ define(function(require, exports, module) {
     }
 
     return ret
+  }
+
+  // return the valid queue for jQuery ('custom' | 'fx' | false)
+  function fixQueue(type) {
+    if (type) {
+      util.isString(type) || (type = 'fx')
+      return type
+    }
+
+    return !!type
   }
 
 
