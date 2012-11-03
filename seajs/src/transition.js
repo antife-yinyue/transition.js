@@ -128,21 +128,22 @@ define(function(require, exports, module) {
     }
   }
 
-  Transition.prototype.stop = function(clearQueue, jumpToEnd) {
+  // .stop([clearQueue], [jumpToEnd])
+  Transition.prototype.stop = function() {
     var $element = this.$element
     var queue = fixQueue(this.options.queue)
-    var params = [clearQueue, jumpToEnd]
+    var args = [].slice.call(arguments)
     var curCSS = {}
 
-    queue && params.unshift(queue)
-
     // get the computed styles
-    !jumpToEnd && util.forEach(this.cssProps, function(name) {
+    !args[1] && util.forEach(this.cssProps, function(name) {
       curCSS[name] = $.css($element[0], name)
     })
     curCSS[$.cssProps[TRANSITION] + 'Property'] = 'none'
 
-    $element.off(vendorEvent).css(curCSS).stop.apply($element, params)
+    queue && args.unshift(queue)
+
+    $element.off(vendorEvent).css(curCSS).stop.apply($element, args)
   }
 
 
