@@ -11,6 +11,7 @@ define(function(require, exports, module) {
     onTransitionEnd: null
   }
   var util = seajs.pluginSDK.util
+  var cache = {}
 
   /**
    * feature tests
@@ -84,18 +85,28 @@ define(function(require, exports, module) {
     var queue = fixQueue(options.queue)
     var cb = options.onTransitionEnd
     var transitions = []
+    var origName
 
     util.forEach(this.cssProps, function(name) {
-      // I help jQuery do this job
-      name = $.camelCase(name)
-      name = $.cssProps[name] ||
-            ($.cssProps[name] = vendorPropName($element[0].style, name))
+      origName = name
+
+      if (cache[origName]) {
+        name = cache[origName]
+      }
+      else {
+        name = $.camelCase(name)
+        name = $.cssProps[name] ||
+              ($.cssProps[name] = vendorPropName($element[0].style, name))
+
+        name = name.replace(/^(ms)/, function() { return 'Ms' })
+                   .replace(/([A-Z])/g, function(letter) {
+                     return '-' + letter.toLowerCase()
+                   })
+
+        cache[origName] = name
+      }
 
       // set string for the `transition` css property
-      name = name.replace(/^(ms)/, function() { return 'Ms' })
-                 .replace(/([A-Z])/g, function(letter) {
-                   return '-' + letter.toLowerCase()
-                 })
       transitions.push(
         [name, options.duration, options.easing, options.delay].join(' ')
       )
