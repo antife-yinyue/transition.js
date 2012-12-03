@@ -1,3 +1,3 @@
-# The solution of CSS3 transformations and transitions for SeaJS
+# Super-smooth css3 transitions for SeaJS
 
 ### Developing...
