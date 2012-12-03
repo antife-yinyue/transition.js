@@ -3,13 +3,6 @@ define(function(require, exports, module) {
 
   var TRANSITION = 'transition'
   var cssPrefixes = ['Webkit', 'Moz', 'ms', 'O']
-  var defaults = {
-    duration: '0.5s',
-    easing: 'ease',
-    delay: '0s',
-    queue: true,
-    onTransitionEnd: null
-  }
   var util = seajs.pluginSDK.util
   var cache = {}
 
@@ -77,17 +70,23 @@ define(function(require, exports, module) {
     }
 
     properties || (properties = {})
-    options = mergeObject(defaults, options)
+    options = merge({
+      duration: '0.5s',
+      easing: 'ease',
+      delay: '0s',
+      queue: true,
+      onTransitionEnd: null
+    }, options)
 
-    this.cssProps = util.keys(properties)
-    this.options = options
+    this._cssProps = util.keys(properties)
+    this._options = options
 
     var queue = fixQueue(options.queue)
     var cb = options.onTransitionEnd
     var transitions = []
     var origName
 
-    util.forEach(this.cssProps, function(name) {
+    util.forEach(this._cssProps, function(name) {
       origName = name
 
       if (cache[origName]) {
@@ -108,7 +107,8 @@ define(function(require, exports, module) {
 
       // set string for the `transition` css property
       transitions.push(
-        [name, options.duration, options.easing, options.delay].join(' ')
+        [].concat(name, options.duration, options.easing, options.delay)
+          .join(' ')
       )
     })
 
@@ -142,12 +142,12 @@ define(function(require, exports, module) {
   // .stop([clearQueue], [jumpToEnd])
   Transition.prototype.stop = function() {
     var $element = this.$element
-    var queue = fixQueue(this.options.queue)
+    var queue = fixQueue(this._options.queue)
     var args = [].slice.call(arguments)
     var curCSS = {}
 
     // get the computed styles
-    !args[1] && util.forEach(this.cssProps, function(name) {
+    !args[1] && util.forEach(this._cssProps, function(name) {
       curCSS[name] = $.css($element[0], name)
     })
     curCSS[$.cssProps[TRANSITION] + 'Property'] = 'none'
@@ -177,19 +177,15 @@ define(function(require, exports, module) {
     return origName
   }
 
-  // merge 2 objects into a new object
-  function mergeObject(o1, o2) {
-    var ret = {}
+  // merge objects's value to `base`, only when `base` has the property
+  function merge(base) {
+    [].slice.call(arguments, 1).forEach(function(source) {
+      for (var prop in source) {
+        base.hasOwnProperty(prop) && (base[prop] = source[prop])
+      }
+    })
 
-    if (!o2) {
-      return o1
-    }
-
-    for (var i in o1) {
-      ret[i] = o2.hasOwnProperty(i) ? o2[i] : o1[i]
-    }
-
-    return ret
+    return base
   }
 
   // return the valid queue for jQuery ('custom' | 'fx' | false)
