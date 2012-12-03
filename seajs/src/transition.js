@@ -158,6 +158,9 @@ define(function(require, exports, module) {
   }
 
 
+  /**
+   * helpers
+   */
   // return a css property mapped to a potentially vendor prefixed property
   function vendorPropName(style, name) {
     if (name in style) {
@@ -177,13 +180,13 @@ define(function(require, exports, module) {
     return origName
   }
 
-  // merge objects's value to `base`, only when `base` has the property
-  function merge(base) {
-    util.forEach([].slice.call(arguments, 1), function(source) {
+  // merge source's value to `base`, only when `base` has the property
+  function merge(base, source) {
+    if (source) {
       for (var prop in source) {
         base.hasOwnProperty(prop) && (base[prop] = source[prop])
       }
-    })
+    }
 
     return base
   }
