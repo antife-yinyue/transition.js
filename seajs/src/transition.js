@@ -3,8 +3,8 @@ define(function(require, exports, module) {
 
   var TRANSITION = 'transition'
   var cssPrefixes = ['Webkit', 'Moz', 'ms', 'O']
-  var util = seajs.pluginSDK.util
   var cache = {}
+  var util = seajs.pluginSDK.util
 
   /**
    * feature tests
@@ -179,7 +179,7 @@ define(function(require, exports, module) {
 
   // merge objects's value to `base`, only when `base` has the property
   function merge(base) {
-    [].slice.call(arguments, 1).forEach(function(source) {
+    util.forEach([].slice.call(arguments, 1), function(source) {
       for (var prop in source) {
         base.hasOwnProperty(prop) && (base[prop] = source[prop])
       }
